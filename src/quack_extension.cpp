@@ -6,6 +6,9 @@
 #include "duckdb/common/string_util.hpp"
 #include "duckdb/function/scalar_function.hpp"
 
+#include <aws/core/Aws.h>
+#include <aws/core/auth/AWSCredentialsProviderChain.h>
+#include <iostream>
 
 #include <duckdb/parser/parsed_data/create_scalar_function_info.hpp>
 
@@ -35,6 +38,12 @@ static void LoadInternal(DatabaseInstance &instance) {
 
 void QuackExtension::Load(DuckDB &db) {
 	LoadInternal(*db.instance);
+        Aws::SDKOptions options;
+        Aws::InitAPI(options);
+        Aws::Auth::DefaultAWSCredentialsProviderChain provider;
+        auto credentials = provider.GetAWSCredentials();
+        Printer::Print("Key ID " + credentials.GetAWSAccessKeyId());
+        Aws::ShutdownAPI(options);
 }
 std::string QuackExtension::Name() {
 	return "quack";
