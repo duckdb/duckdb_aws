@@ -61,17 +61,19 @@ jobs:
     - if: ${{ matrix.arch == 'linux_amd64_gcc4' }}
       uses: ./duckdb/.github/actions/centos_7_setup
       with:
-        openssl: 0
+        openssl: 1
 
     - if: ${{ matrix.arch == 'linux_amd64' || matrix.arch == 'linux_arm64' }}
       uses: ./duckdb/.github/actions/ubuntu_16_setup
       with:
+        openssl: 1
         aarch64_cross_compile: ${{ matrix.arch == 'linux_arm64' && 1 }}
 
       # Build extension
     - name: Build extension
       env:
         GEN: ninja
+        OPENSSL_ROOT_DIR: /usr/local/ssl
         STATIC_LIBCPP: 1
         CC: ${{ matrix.arch == 'linux_arm64' && 'aarch64-linux-gnu-gcc' || '' }}
         CXX: ${{ matrix.arch == 'linux_arm64' && 'aarch64-linux-gnu-g++' || '' }}
@@ -91,26 +93,3 @@ jobs:
         name: ${{matrix.arch}}-extensions
         path: |
           build/release/extension/aws/aws.duckdb_extension
-
-    - name: Deploy
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.S3_DEPLOY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_DEPLOY_KEY }}
-        AWS_DEFAULT_REGION: ${{ secrets.S3_REGION }}
-        BUCKET_NAME: ${{ secrets.S3_BUCKET }}
-      run: |
-        git config --global --add safe.directory '*'
-        cd duckdb
-        git fetch --tags
-        export DUCKDB_VERSION=`git tag --points-at HEAD`
-        export DUCKDB_VERSION=${DUCKDB_VERSION:=`git log -1 --format=%h`}
-        cd ..
-        if [[ "$AWS_ACCESS_KEY_ID" == "" ]] ; then
-          echo 'No key set, skipping'
-        elif [[ "$GITHUB_REF" =~ ^(refs/tags/v.+)$ ]] ; then
-          python3 -m pip install pip awscli
-          ./scripts/extension-upload.sh aws ${{ github.ref_name }} $DUCKDB_VERSION ${{matrix.arch}} $BUCKET_NAME true
-        elif [[ "$GITHUB_REF" =~ ^(refs/heads/main)$ ]] ; then
-          python3 -m pip install pip awscli
-          ./scripts/extension-upload.sh aws `git log -1 --format=%h` $DUCKDB_VERSION ${{matrix.arch}} $BUCKET_NAME false
-        fi
