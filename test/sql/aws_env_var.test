@@ -1,0 +1,16 @@
+# name: test/sql/aws_env_var.test
+# description: test aws extension with the s3 env vars set
+# group: [aws]
+
+require aws
+
+require httpfs
+
+require-env AWS_ACCESS_KEY_ID
+
+require-env AWS_SECRET_ACCESS_KEY
+
+query I
+CALL load_aws_credentials();
+----
+minio_duckdb_user

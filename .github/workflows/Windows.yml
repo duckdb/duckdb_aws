@@ -33,7 +33,10 @@ jobs:
           cd duckdb
           git checkout ${{ matrix.duckdb_version }}
 
-      - name: Build extension
+      - name: Build + test extension
+        env:
+          AWS_ACCESS_KEY_ID: minio_duckdb_user
+          AWS_SECRET_ACCESS_KEY: minio_duckdb_user_password
         run: |
           make release
           build/release/test/Release/unittest.exe

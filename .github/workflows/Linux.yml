@@ -78,8 +78,11 @@ jobs:
       run: |
         make release
 
-    - name: Build extension
+    - name: Test extension
       if: ${{ matrix.arch != 'linux_arm64'}}
+      env:
+        AWS_ACCESS_KEY_ID: minio_duckdb_user
+        AWS_SECRET_ACCESS_KEY: minio_duckdb_user_password
       run: |
         make test
 
