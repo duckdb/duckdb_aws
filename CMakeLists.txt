@@ -33,13 +33,19 @@ ExternalProject_Add(curl
         "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/curl_install"
         "-DOPENSSL_USE_STATIC_LIBS:BOOL=ON"
         "-DOPENSSL_ROOT_DIR:STRING=/opt/homebrew/Cellar/openssl@1.1"
-        -DCMAKE_OSX_ARCHITECTURES=x86_64;arm64
-        BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/libcurl.a"
+        "-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}"
+        BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}curl${CMAKE_STATIC_LIBRARY_SUFFIX}"
         )
 add_library(curl_static STATIC IMPORTED)
-set_property(TARGET curl_static PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/libcurl.a")
+set_property(TARGET curl_static PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}curl${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 ########### ZLIB ###########
+if(WIN32)
+    set(ZLIB_LIBNAME zlib.lib)
+elseif()
+    set(ZLIB_LIBNAME libz.a)
+endif()
+
 ExternalProject_Add(zlib
         GIT_REPOSITORY https://github.com/madler/zlib.git
         GIT_TAG v1.2.11
@@ -48,94 +54,98 @@ ExternalProject_Add(zlib
         CMAKE_CACHE_ARGS
         "-DBUILD_SHARED_LIBS:BOOL=OFF"
         "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/zlib_install"
-        "-DCMAKE_OSX_ARCHITECTURES:STRING=x86_64;arm64"
-        BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/zlib_install/lib/libz.a"
+        "-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}"
+        BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/zlib_install/lib/${ZLIB_LIBNAME}"
         )
 add_library(zlib_static STATIC IMPORTED)
-set_property(TARGET zlib_static PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/zlib_install/lib/libz.a")
+set_property(TARGET zlib_static PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/zlib_install/lib/${ZLIB_LIBNAME}")
 
 ########### AWS SDK ###########
+if (OSX_BUILD_UNIVERSAL)
+    set(CMAKE_OSX_ARCHITECTURES_PIPESEPARATOR "x86_64|arm64")
+endif()
 ExternalProject_Add(awssdk
         GIT_REPOSITORY    https://github.com/aws/aws-sdk-cpp.git
         GIT_TAG           1.11.35
         LIST_SEPARATOR    "|"
         CMAKE_ARGS       -DBUILD_SHARED_LIBS=OFF
-#            -DBUILD_ONLY=core;s3;s3-crt;transfer
-            -DBUILD_ONLY=core
-            -DENABLE_TESTING=OFF
-            -DSIMPLE_INSTALL=ON
-            -DCMAKE_INSTALL_PREFIX=install
-            -DCMAKE_OSX_ARCHITECTURES=x86_64|arm64
+        #            -DBUILD_ONLY=core;s3;s3-crt;transfer
+        -DBUILD_ONLY=core
+        -DENABLE_TESTING=OFF
+        -DSIMPLE_INSTALL=ON
+        -DCMAKE_INSTALL_PREFIX=install
+        -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES_PIPESEPARATOR}
             # Note: there's options in the aws sdk build `BUILD_ZLIB` and `BUILD_CURL`, which would be nice here, but I
             #       couldn't get them to work for the life of me, so instead we use the external projects above instead
         BUILD_ALWAYS      TRUE
         TEST_COMMAND      ""
-        BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-cpp-sdk-core.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-crt-cpp.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-s3.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-auth.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-event-stream.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-http.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-mqtt.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-sdkutils.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-io.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-checksums.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-compression.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-cal.a"
-            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-common.a"
+        BUILD_BYPRODUCTS
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-cpp-sdk-core${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-crt-cpp${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-s3${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-auth${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-event-stream${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-http${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-mqtt${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-sdkutils${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-io${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-checksums${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-compression${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-cal${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-common${CMAKE_STATIC_LIBRARY_SUFFIX}"
         )
 
 add_library(awssdk_core STATIC IMPORTED)
 add_dependencies(awssdk_core awssdk_project)
-set_target_properties(awssdk_core PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-cpp-sdk-core.a")
+set_target_properties(awssdk_core PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-cpp-sdk-core${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_crt STATIC IMPORTED)
 add_dependencies(awssdk_crt awssdk_project)
-set_target_properties(awssdk_crt PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-crt-cpp.a")
+set_target_properties(awssdk_crt PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-crt-cpp${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_s3 STATIC IMPORTED)
 add_dependencies(awssdk_c_s3 awssdk_project)
-set_target_properties(awssdk_c_s3 PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-s3.a")
+set_target_properties(awssdk_c_s3 PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-s3${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_auth STATIC IMPORTED)
 add_dependencies(awssdk_c_auth awssdk_project)
-set_target_properties(awssdk_c_auth PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-auth.a")
+set_target_properties(awssdk_c_auth PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-auth${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_eventstream STATIC IMPORTED)
 add_dependencies(awssdk_c_eventstream awssdk_project)
-set_target_properties(awssdk_c_eventstream PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-event-stream.a")
+set_target_properties(awssdk_c_eventstream PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-event-stream${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_http STATIC IMPORTED)
 add_dependencies(awssdk_c_http awssdk_project)
-set_target_properties(awssdk_c_http PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-http.a")
+set_target_properties(awssdk_c_http PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-http${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_mqtt STATIC IMPORTED)
 add_dependencies(awssdk_c_mqtt awssdk_project)
-set_target_properties(awssdk_c_mqtt PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-mqtt.a")
+set_target_properties(awssdk_c_mqtt PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-mqtt${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_io STATIC IMPORTED)
 add_dependencies(awssdk_c_io awssdk_project)
-set_target_properties(awssdk_c_io PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-io.a")
+set_target_properties(awssdk_c_io PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-io${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_sdkutils STATIC IMPORTED)
 add_dependencies(awssdk_c_sdkutils awssdk_project)
-set_target_properties(awssdk_c_sdkutils PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-sdkutils.a")
+set_target_properties(awssdk_c_sdkutils PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-sdkutils${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_checksums STATIC IMPORTED)
 add_dependencies(awssdk_checksums awssdk_project)
-set_target_properties(awssdk_checksums PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-checksums.a")
+set_target_properties(awssdk_checksums PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-checksums${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_compression STATIC IMPORTED)
 add_dependencies(awssdk_c_compression awssdk_project)
-set_target_properties(awssdk_c_compression PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-compression.a")
+set_target_properties(awssdk_c_compression PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-compression${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_cal STATIC IMPORTED)
 add_dependencies(awssdk_c_cal awssdk_project)
-set_target_properties(awssdk_c_cal PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-cal.a")
+set_target_properties(awssdk_c_cal PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-cal${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_library(awssdk_c_common STATIC IMPORTED)
 add_dependencies(awssdk_c_common awssdk_project)
-set_target_properties(awssdk_c_common PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-common.a")
+set_target_properties(awssdk_c_common PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-common${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 add_dependencies(${EXTENSION_NAME} awssdk)
 ######################
