@@ -33,6 +33,7 @@ ExternalProject_Add(curl
         "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/curl_install"
         "-DOPENSSL_USE_STATIC_LIBS:BOOL=ON"
         "-DOPENSSL_ROOT_DIR:STRING=/opt/homebrew/Cellar/openssl@1.1"
+        -DCMAKE_OSX_ARCHITECTURES=x86_64;arm64
         BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/libcurl.a"
         )
 add_library(curl_static STATIC IMPORTED)
@@ -47,6 +48,7 @@ ExternalProject_Add(zlib
         CMAKE_CACHE_ARGS
         "-DBUILD_SHARED_LIBS:BOOL=OFF"
         "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/zlib_install"
+        "-DCMAKE_OSX_ARCHITECTURES:STRING=x86_64;arm64"
         BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/zlib_install/lib/libz.a"
         )
 add_library(zlib_static STATIC IMPORTED)
@@ -63,6 +65,7 @@ ExternalProject_Add(awssdk
             -DENABLE_TESTING=OFF
             -DSIMPLE_INSTALL=ON
             -DCMAKE_INSTALL_PREFIX=install
+            -DCMAKE_OSX_ARCHITECTURES=x86_64|arm64
             # Note: there's options in the aws sdk build `BUILD_ZLIB` and `BUILD_CURL`, which would be nice here, but I
             #       couldn't get them to work for the life of me, so instead we use the external projects above instead
         BUILD_ALWAYS      TRUE
@@ -82,9 +85,9 @@ ExternalProject_Add(awssdk
             "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-c-common.a"
         )
 
-add_library(awssdk_core_mine STATIC IMPORTED)
-add_dependencies(awssdk_core_mine awssdk_project)
-set_target_properties(awssdk_core_mine PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-cpp-sdk-core.a")
+add_library(awssdk_core STATIC IMPORTED)
+add_dependencies(awssdk_core awssdk_project)
+set_target_properties(awssdk_core PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/libaws-cpp-sdk-core.a")
 
 add_library(awssdk_crt STATIC IMPORTED)
 add_dependencies(awssdk_crt awssdk_project)
@@ -151,11 +154,8 @@ if(APPLE)
     set(AWS_S2N_LIBRARY "")
 endif()
 
-message(--------------------------------------- QUACK AWS --------------------------------------- )
-message(${OPENSSL_LIBRARIES})
-
 target_link_libraries(${EXTENSION_NAME}
-        awssdk_core_mine
+        awssdk_core
         awssdk_crt
         awssdk_c_s3
         awssdk_c_auth
