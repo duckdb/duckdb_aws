@@ -1,6 +1,6 @@
 #define DUCKDB_EXTENSION_MAIN
 
-#include "quack_extension.hpp"
+#include "aws_extension.hpp"
 #include "duckdb.hpp"
 #include "duckdb/common/exception.hpp"
 #include "duckdb/parser/parsed_data/create_table_function_info.hpp"
@@ -75,23 +75,23 @@ static void LoadInternal(DuckDB &db) {
 	con.Commit();
 }
 
-void QuackExtension::Load(DuckDB &db) {
+void AwsExtension::Load(DuckDB &db) {
 	LoadInternal(db);
 }
-std::string QuackExtension::Name() {
-	return "quack";
+std::string AwsExtension::Name() {
+	return "aws";
 }
 
 } // namespace duckdb
 
 extern "C" {
 
-DUCKDB_EXTENSION_API void quack_init(duckdb::DatabaseInstance &db) {
+DUCKDB_EXTENSION_API void aws_init(duckdb::DatabaseInstance &db) {
 	duckdb::DuckDB db_wrapper(db);
-	db_wrapper.LoadExtension<duckdb::QuackExtension>();
+	db_wrapper.LoadExtension<duckdb::AwsExtension>();
 }
 
-DUCKDB_EXTENSION_API const char *quack_version() {
+DUCKDB_EXTENSION_API const char *aws_version() {
 	return duckdb::DuckDB::LibraryVersion();
 }
 }
