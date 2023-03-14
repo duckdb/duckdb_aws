@@ -144,7 +144,6 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/i
 message(${CMAKE_CURRENT_BINARY_DIR})
 
 if(APPLE)
-    # apple why u so weird
     # somehow aws-sdk doesn't build libs2n on apple/clang
     # seems not needed on mac with security framework,
     # otherwise can build from https://github.com/aws/s2n-tls
