@@ -16,6 +16,12 @@ build_loadable_extension(${TARGET_NAME} ${PARAMETERS} ${EXTENSION_SOURCES})
 include(ExternalProject)
 
 ########### CURL ###########
+if(WIN32)
+    set(CURL_LIBNAME libcurl.lib)
+else()
+    set(CURL_LIBNAME libcurl.a)
+endif()
+
 ExternalProject_Add(curl
         GIT_REPOSITORY "https://github.com/curl/curl"
         GIT_TAG "curl-7_88_1"
@@ -34,15 +40,15 @@ ExternalProject_Add(curl
         "-DOPENSSL_USE_STATIC_LIBS:BOOL=ON"
         "-DOPENSSL_ROOT_DIR:STRING=/opt/homebrew/Cellar/openssl@1.1"
         "-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}"
-        BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}curl${CMAKE_STATIC_LIBRARY_SUFFIX}"
+        BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/${CURL_LIBNAME}"
         )
 add_library(curl_static STATIC IMPORTED)
-set_property(TARGET curl_static PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}curl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+set_property(TARGET curl_static PROPERTY IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/${CURL_LIBNAME}")
 
 ########### ZLIB ###########
 if(WIN32)
     set(ZLIB_LIBNAME zlib.lib)
-elseif()
+else()
     set(ZLIB_LIBNAME libz.a)
 endif()
 
