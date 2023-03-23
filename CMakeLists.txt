@@ -170,6 +170,12 @@ if(APPLE)
     set(AWS_S2N_LIBRARY "")
 endif()
 
+if(WIN32)
+    set(AWS_WIN_LIBS "wininet.lib winhttp.lib bcrypt.lib userenv.lib rpcrt4.lib")
+else()
+    set(AWS_WIN_LIBS "")
+endif()
+
 target_link_libraries(${EXTENSION_NAME}
         awssdk_core
         awssdk_crt
@@ -189,6 +195,7 @@ target_link_libraries(${EXTENSION_NAME}
         curl_static
         zlib_static
         ${AWS_FRAMEWORK}
+        ${AWS_WIN_LIBS}
         )
 
 install(

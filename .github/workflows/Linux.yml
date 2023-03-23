@@ -76,12 +76,19 @@ jobs:
         export OPENSSL_ROOT_DIR=`pwd`/build/openssl/build
         echo "OPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR" >> $GITHUB_ENV
 
+    - name: Configure OpenSSL path
+      if: ${{ matrix.arch == 'linux_amd64' }}
+      shell: bash
+      run: |
+        echo "OPENSSL_ROOT_DIR=/usr/local/ssl" >> $GITHUB_ENV
+
       # Build extension
     - name: Build extension
       env:
         GEN: ninja
         STATIC_LIBCPP: 1
         STATIC_OPENSSL: 1
+        OPENSSL_ROOT_DIR: ${{ env.OPENSSL_ROOT_DIR }}
         CC: ${{ matrix.arch == 'linux_arm64' && 'aarch64-linux-gnu-gcc' || '' }}
         CXX: ${{ matrix.arch == 'linux_arm64' && 'aarch64-linux-gnu-g++' || '' }}
       run: |
