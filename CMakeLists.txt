@@ -171,9 +171,13 @@ if(APPLE)
 endif()
 
 if(WIN32)
-    set(AWS_WIN_LIBS "wininet.lib winhttp.lib bcrypt.lib userenv.lib rpcrt4.lib")
-else()
-    set(AWS_WIN_LIBS "")
+    target_link_libraries(${EXTENSION_NAME}
+            wininet.lib
+            winhttp.lib
+            bcrypt.lib
+            userenv.lib
+            rpcrt4.lib
+            )
 endif()
 
 target_link_libraries(${EXTENSION_NAME}

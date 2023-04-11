@@ -67,7 +67,7 @@ jobs:
       uses: ./duckdb/.github/actions/ubuntu_16_setup
       with:
         openssl: 1
-        aarch64_cross_compile: ${{ matrix.arch == 'linux_arm64' && 1 }}
+        aarch64_cross_compile: ${{ matrix.arch == 'linux_arm64' && 1 || 0 }}
 
     - name: Configure OpenSSL path
       if: ${{ matrix.arch == 'linux_arm64' }}
@@ -101,9 +101,3 @@ jobs:
         AWS_SECRET_ACCESS_KEY: minio_duckdb_user_password
       run: |
         make test
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ${{matrix.arch}}-extensions
-        path: |
-          build/release/extension/aws/aws.duckdb_extension
