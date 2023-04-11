@@ -36,6 +36,7 @@ ExternalProject_Add(curl
         "-DCURL_USE_LIBSSH2:BOOL=OFF"
         "-DCURL_DISABLE_LDAP:BOOL=ON"
 
+        "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON"
         "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/curl_install"
         "-DCMAKE_INSTALL_LIBDIR:STRING=lib"
         "-DOPENSSL_USE_STATIC_LIBS:BOOL=ON"
@@ -63,6 +64,7 @@ ExternalProject_Add(zlib
         "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/zlib_install"
         "-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}"
         "-DCMAKE_INSTALL_LIBDIR:STRING=lib"
+        "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON"
         BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/zlib_install/lib/${ZLIB_LIBNAME}"
         )
 add_library(zlib_static STATIC IMPORTED)
@@ -84,6 +86,8 @@ ExternalProject_Add(awssdk
         -DSIMPLE_INSTALL=ON
         -DCMAKE_INSTALL_PREFIX=install
         -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES_PIPESEPARATOR}
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+
             # Note: there's options in the aws sdk build `BUILD_ZLIB` and `BUILD_CURL`, which would be nice here, but I
             #       couldn't get them to work for the life of me, so instead we use the external projects above instead
         BUILD_ALWAYS      TRUE
@@ -178,9 +182,12 @@ if(WIN32)
             wininet.lib
             winhttp.lib
             bcrypt.lib
+            ncrypt.lib
             userenv.lib
             rpcrt4.lib
             secur32.lib
+            advapi32.lib
+            shLwApi.Lib
             )
 endif()
 
