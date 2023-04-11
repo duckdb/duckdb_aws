@@ -106,6 +106,7 @@ ExternalProject_Add(awssdk
             "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-compression${CMAKE_STATIC_LIBRARY_SUFFIX}"
             "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-cal${CMAKE_STATIC_LIBRARY_SUFFIX}"
             "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-common${CMAKE_STATIC_LIBRARY_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}s2n${CMAKE_STATIC_LIBRARY_SUFFIX}"
         )
 
 add_library(awssdk_core STATIC IMPORTED)
@@ -160,6 +161,10 @@ add_library(awssdk_c_common STATIC IMPORTED)
 add_dependencies(awssdk_c_common awssdk_project)
 set_target_properties(awssdk_c_common PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}aws-c-common${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
+add_library(awssdk_libs2n STATIC IMPORTED)
+add_dependencies(awssdk_libs2n awssdk_project)
+set_target_properties(awssdk_libs2n PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/awssdk-prefix/src/awssdk-build/install/lib/${CMAKE_STATIC_LIBRARY_PREFIX}s2n${CMAKE_STATIC_LIBRARY_SUFFIX}")
+
 add_dependencies(${EXTENSION_NAME} awssdk)
 ######################
 
@@ -175,6 +180,8 @@ if(APPLE)
     # otherwise can build from https://github.com/aws/s2n-tls
     set(AWS_FRAMEWORK "-framework corefoundation -framework SystemConfiguration -framework security")
     set(AWS_S2N_LIBRARY "")
+else()
+    set(AWS_S2N_LIBRARY awssdk_libs2n)
 endif()
 
 if(WIN32)
@@ -187,7 +194,8 @@ if(WIN32)
             rpcrt4.lib
             secur32.lib
             advapi32.lib
-            shLwApi.Lib
+            shLwApi.lib
+            Version.lib
             )
 endif()
 
@@ -205,10 +213,11 @@ target_link_libraries(${EXTENSION_NAME}
         awssdk_c_compression
         awssdk_c_cal
         awssdk_c_common
-        OpenSSL::SSL
-        OpenSSL::Crypto
+        ${AWS_S2N_LIBRARY}
         curl_static
         zlib_static
+        OpenSSL::SSL
+        OpenSSL::Crypto
         ${AWS_FRAMEWORK}
         ${AWS_WIN_LIBS}
         )
