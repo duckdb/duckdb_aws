@@ -180,6 +180,8 @@ if(APPLE)
     # otherwise can build from https://github.com/aws/s2n-tls
     set(AWS_FRAMEWORK "-framework corefoundation -framework SystemConfiguration -framework security")
     set(AWS_S2N_LIBRARY "")
+elseif(WIN32)
+    set(AWS_S2N_LIBRARY "")
 else()
     set(AWS_S2N_LIBRARY awssdk_libs2n)
 endif()
