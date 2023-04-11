@@ -37,6 +37,7 @@ ExternalProject_Add(curl
         "-DCURL_DISABLE_LDAP:BOOL=ON"
 
         "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/curl_install"
+        "-DCMAKE_INSTALL_LIBDIR:STRING=lib"
         "-DOPENSSL_USE_STATIC_LIBS:BOOL=ON"
         "-DOPENSSL_ROOT_DIR:STRING=/opt/homebrew/Cellar/openssl@1.1"
         "-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}"
@@ -61,6 +62,7 @@ ExternalProject_Add(zlib
         "-DBUILD_SHARED_LIBS:BOOL=OFF"
         "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/zlib_install"
         "-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}"
+        "-DCMAKE_INSTALL_LIBDIR:STRING=lib"
         BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/zlib_install/lib/${ZLIB_LIBNAME}"
         )
 add_library(zlib_static STATIC IMPORTED)
@@ -78,6 +80,7 @@ ExternalProject_Add(awssdk
         #            -DBUILD_ONLY=core;s3;s3-crt;transfer
         -DBUILD_ONLY=core
         -DENABLE_TESTING=OFF
+        -DCMAKE_INSTALL_LIBDIR=lib
         -DSIMPLE_INSTALL=ON
         -DCMAKE_INSTALL_PREFIX=install
         -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES_PIPESEPARATOR}
@@ -177,6 +180,7 @@ if(WIN32)
             bcrypt.lib
             userenv.lib
             rpcrt4.lib
+            secur32.lib
             )
 endif()
 
