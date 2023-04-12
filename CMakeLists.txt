@@ -40,7 +40,6 @@ ExternalProject_Add(curl
         "-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/curl_install"
         "-DCMAKE_INSTALL_LIBDIR:STRING=lib"
         "-DOPENSSL_USE_STATIC_LIBS:BOOL=ON"
-        "-DOPENSSL_ROOT_DIR:STRING=/opt/homebrew/Cellar/openssl@1.1"
         "-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}"
         BUILD_BYPRODUCTS  "${CMAKE_CURRENT_BINARY_DIR}/curl_install/lib/${CURL_LIBNAME}"
         )
