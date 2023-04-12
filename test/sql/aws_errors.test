@@ -19,6 +19,10 @@ httpfs extension is required for load_aws_credentials
 
 require httpfs
 
+require-env AWS_ACCESS_KEY_ID
+
+require-env AWS_SECRET_ACCESS_KEY
+
 query I
 CALL load_aws_credentials();
 ----
