@@ -81,6 +81,13 @@ set_property(TARGET CURL_STATIC PROPERTY IMPORTED_LOCATION "${LOCAL_INSTALL_DIR}
 add_dependencies(${EXTENSION_NAME} CURL_STATIC)
 
 ########### AWS SDK ###########
+if(MSVC)
+    set(IGNORE_WARNING_OPTION /W0)
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang$"
+        OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set(IGNORE_WARNING_OPTION -w)
+endif()
+
 if (OSX_BUILD_UNIVERSAL)
     set(CMAKE_OSX_ARCHITECTURES_PIPESEPARATOR "x86_64|arm64")
 endif()
@@ -98,6 +105,7 @@ ExternalProject_Add(AWSSDK
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         -DCMAKE_INSTALL_PREFIX=${LOCAL_INSTALL_DIR}
         -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+        -DCMAKE_CXX_FLAGS=${IGNORE_WARNING_OPTION}
 
         # Note: there's options in the aws sdk build `BUILD_ZLIB` and `BUILD_CURL`, which would be nice here, but I
         #       couldn't get them to work for the life of me, so instead we use the external projects above instead
