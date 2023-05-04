@@ -101,3 +101,9 @@ jobs:
         AWS_SECRET_ACCESS_KEY: minio_duckdb_user_password
       run: |
         make test
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: aws-extension-${{ matrix.arch }}
+        path: |
+          build/release/extension/aws/aws.duckdb_extension

@@ -65,6 +65,13 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: minio_duckdb_user
           AWS_SECRET_ACCESS_KEY: minio_duckdb_user_password
+          OSX_BUILD_UNIVERSAL: 1
         run: |
           make release
           make test
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: aws-extension-osx-universal
+          path: |
+            build/release/extension/aws/aws.duckdb_extension

@@ -45,3 +45,9 @@ jobs:
         run: |
           make release
           build/release/test/Release/unittest.exe
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: aws-extension-windows
+          path: |
+            build/release/extension/aws/aws.duckdb_extension
