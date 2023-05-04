@@ -20,6 +20,12 @@ include(ExternalProject)
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${LOCAL_INSTALL_DIR})
 
 ########### ZLIB ###########
+if(WIN32)
+    set(ZLIB_LIBNAME zlib.lib)
+else()
+    set(ZLIB_LIBNAME libz.a)
+endif()
+
 ExternalProject_Add(ZLIB
         GIT_REPOSITORY https://github.com/madler/zlib.git
         GIT_TAG v1.2.11
@@ -34,8 +40,17 @@ ExternalProject_Add(ZLIB
         "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON"
         BUILD_BYPRODUCTS  "${LOCAL_INSTALL_DIR}/lib/${ZLIB_LIBNAME}"
         )
+add_library(ZLIB_STATIC STATIC IMPORTED)
+set_property(TARGET ZLIB_STATIC PROPERTY IMPORTED_LOCATION "${LOCAL_INSTALL_DIR}/lib/${ZLIB_LIBNAME}")
+add_dependencies(${EXTENSION_NAME} ZLIB_STATIC)
 
 ########### CURL ###########
+if(WIN32)
+    set(CURL_LIBNAME libcurl.lib)
+else()
+    set(CURL_LIBNAME libcurl.a)
+endif()
+
 ExternalProject_Add(CURL
         GIT_REPOSITORY "https://github.com/curl/curl"
         GIT_TAG "curl-7_88_1"
@@ -59,8 +74,11 @@ ExternalProject_Add(CURL
         "-DOPENSSL_USE_STATIC_LIBS:BOOL=ON"
         "-DOPENSSL_ROOT_DIR:STRING=${OPENSSL_ROOT_DIR}"
         "-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}"
-        #        BUILD_BYPRODUCTS  "${LOCAL_INSTALL_DIR}/lib/${CURL_LIBNAME}"
+        BUILD_BYPRODUCTS "${LOCAL_INSTALL_DIR}/lib/${CURL_LIBNAME}"
         )
+add_library(CURL_STATIC STATIC IMPORTED)
+set_property(TARGET CURL_STATIC PROPERTY IMPORTED_LOCATION "${LOCAL_INSTALL_DIR}/lib/${CURL_LIBNAME}")
+add_dependencies(${EXTENSION_NAME} CURL_STATIC)
 
 ########### AWS SDK ###########
 if (OSX_BUILD_UNIVERSAL)
@@ -195,9 +213,6 @@ if(WIN32)
             )
 endif()
 
-find_package(ZLIB REQUIRED)
-find_package(CURL REQUIRED)
-
 # AWS SDK Libs by name
 target_link_libraries(${EXTENSION_NAME}
         awssdk_core
@@ -214,8 +229,8 @@ target_link_libraries(${EXTENSION_NAME}
         awssdk_c_cal
         awssdk_c_common
         ${AWS_S2N_LIBRARY}
-        CURL::libcurl
-        ZLIB::ZLIB
+        CURL_STATIC
+        ZLIB_STATIC
         OpenSSL::SSL
         OpenSSL::Crypto
         ${AWS_FRAMEWORK}
