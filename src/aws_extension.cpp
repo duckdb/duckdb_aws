@@ -36,7 +36,7 @@ struct SetAWSCredentialsFunctionData : public TableFunctionData {
 
 static unique_ptr<FunctionData> LoadAWSCredentialsBind(ClientContext &context, TableFunctionBindInput &input,
                                           vector<LogicalType> &return_types, vector<string> &names) {
-	auto result = make_unique<SetAWSCredentialsFunctionData>();
+	auto result = make_uniq<SetAWSCredentialsFunctionData>();
 	return_types.emplace_back(LogicalType::VARCHAR);
 	names.emplace_back("loaded_key");
 	return std::move(result);
