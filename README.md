@@ -1,6 +1,9 @@
 # DuckDB AWS Extension
 This is a DuckDB extension that provides features that depend on the AWS SDK.
 
+## Supported architectures
+Currently, only Linux x86_64 and MacOS are supported.
+
 ## Features
 
 | function | type | description | 
