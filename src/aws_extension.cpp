@@ -49,8 +49,7 @@ static void LoadAWSCredentialsFun(ClientContext &context, TableFunctionInput &da
 	}
 
 	if (!context.db->ExtensionIsLoaded("httpfs")) {
-		// TODO exception type
-		throw Exception("httpfs extension is required for load_aws_credentials");
+		throw MissingExtensionException("httpfs extension is required for load_aws_credentials");
 	}
 
 	//! Return the Key ID of the key we found, or NULL if none was found

@@ -96,7 +96,7 @@ endif()
 
 ExternalProject_Add(AWSSDK
         GIT_REPOSITORY    https://github.com/aws/aws-sdk-cpp.git
-        GIT_TAG           1.11.77
+        GIT_TAG           1.11.35
         DEPENDS           ZLIB CURL
         LIST_SEPARATOR    "|"
         CMAKE_ARGS       -DBUILD_SHARED_LIBS=OFF
