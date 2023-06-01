@@ -1,4 +1,4 @@
-name: MacOS
+name: Windows
 on: [push, pull_request,repository_dispatch]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref || '' }}-${{ github.base_ref || '' }}-${{ github.ref != 'refs/heads/main' || github.sha }}
@@ -8,32 +8,23 @@ defaults:
     shell: bash
 
 jobs:
-  macos:
-    name: MacOS Release (${{ matrix.osx_build_arch }})
-    runs-on: macos-latest
+  windows:
+    name: Release
+    runs-on: windows-latest
     strategy:
       matrix:
         # Add commits/tags to build against other DuckDB versions
         duckdb_version: [ '<submodule_version>' ]
         vcpkg_version: [ '2023.04.15' ]
-        vcpkg_triplet: [ 'x64-osx', 'arm64-osx' ]
-        include:
-          - vcpkg_triplet: 'x64-osx'
-            osx_build_arch: 'x86_64'
-            duckdb_arch: 'osx_amd64'
-          - vcpkg_triplet: 'arm64-osx'
-            osx_build_arch: 'arm64'
-            duckdb_arch: 'osx_arm64'
-
+        vcpkg_triplet: ['x64-windows']
     env:
       VCPKG_TARGET_TRIPLET: ${{ matrix.vcpkg_triplet }}
-      OSX_BUILD_ARCH: ${{ matrix.osx_build_arch }}
       GEN: Ninja
-      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
+      VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg\bincache
       # Let's use GitHub Action cache as storage for the vcpkg Binary Caching feature.
       VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
-      VCPKG_TOOLCHAIN_PATH: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+      VCPKG_TOOLCHAIN_PATH: ${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake
 
     steps:
       - uses: actions/checkout@v3
@@ -41,41 +32,31 @@ jobs:
           fetch-depth: 0
           submodules: 'true'
 
-      - name: Install Ninja
-        run: brew install ninja
-
-      # Set env vars needed for vcpkg to leverage the GitHub Action cache as a storage
-      # for Binary Caching.
       - uses: actions/github-script@v6
         with:
           script: |
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-      - name: Setup Ccache
-        uses: hendrikmuhs/ccache-action@main
-        with:
-          key: ${{ github.job }}-${{ matrix.duckdb_version }}
-          save: ${{ github.ref == 'refs/heads/master' || github.repository != 'duckdb/duckdb' }}
-
-      - name: setup vcpkg
-        run: |
-          git clone https://github.com/Microsoft/vcpkg.git
-          cd vcpkg && git checkout ${{ matrix.vcpkg_version }} && ./bootstrap-vcpkg.sh
-
       - uses: actions/setup-python@v2
         with:
           python-version: '3.7'
 
-      - name: "Create directory '${{ env.VCPKG_DEFAULT_BINARY_CACHE }}'"
-        run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
-        shell: bash
-
       - name: Checkout DuckDB to version
+        # Add commits/tags to build against other DuckDB versions
         if: ${{ matrix.duckdb_version != '<submodule_version>'}}
         run: |
           cd duckdb
           git checkout ${{ matrix.duckdb_version }}
+
+      - name: setup vcpkg
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd vcpkg && git checkout ${{ matrix.vcpkg_version }} && ./bootstrap-vcpkg.sh 
+
+      - name: "Create directory '${{ env.VCPKG_DEFAULT_BINARY_CACHE }}'"
+        run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
+        shell: bash
 
       # Restore vcpkg from the GitHub Action cache service. Note that packages are restored by vcpkg's binary caching
       # when it is being run afterwards by CMake.
@@ -87,31 +68,23 @@ jobs:
           # The other paths starting with '!' are exclusions: they contain termporary files generated during the build of the installed packages.
           path: |
             ${{ env.VCPKG_ROOT }}
-            !${{ env.VCPKG_ROOT }}/buildtrees
-            !${{ env.VCPKG_ROOT }}/packages
-            !${{ env.VCPKG_ROOT }}/downloads
-            !${{ env.VCPKG_ROOT }}/installed
+            !${{ env.VCPKG_ROOT }}\buildtrees
+            !${{ env.VCPKG_ROOT }}\packages
+            !${{ env.VCPKG_ROOT }}\downloads
+            !${{ env.VCPKG_ROOT }}\installed
           # The key is composed in a way that it gets properly invalidated whenever a different version of vcpkg is being used.
           key: ${{matrix.vcpkg_version}}${{matrix.vcpkg_triplet}}
 
-      # Build extension
       - name: Build extension
-        shell: bash
         run: |
           make release
+          build/release/test/Release/unittest.exe
 
       - uses: actions/upload-artifact@v2
         with:
-          name: osx-${{ matrix.osx_build_arch }}-extension
+          name: windows-extension
           path: |
             build/release/extension/aws/aws.duckdb_extension
-
-      # Build extension
-      - name: Test Extension
-        if: ${{ matrix.osx_build_arch == 'x86_64'}}
-        shell: bash
-        run: |
-          make test
 
       - name: Deploy
         env:
@@ -121,7 +94,6 @@ jobs:
           BUCKET_NAME: ${{ secrets.S3_BUCKET }}
           DUCKDB_EXTENSION_SIGNING_PK: ${{ secrets.DUCKDB_EXTENSION_SIGNING_KEY }}
         run: |
-          git config --global --add safe.directory '*'
           cd duckdb
           git fetch --tags
           export DUCKDB_VERSION=`git tag --points-at HEAD`
@@ -130,9 +102,9 @@ jobs:
           if [[ "$AWS_ACCESS_KEY_ID" == "" ]] ; then
             echo 'No key set, skipping'
           elif [[ "$GITHUB_REF" =~ ^(refs/tags/v.+)$ ]] ; then
-            python3 -m pip install pip awscli
-            ./scripts/extension-upload.sh aws ${{ github.ref_name }} $DUCKDB_VERSION ${{matrix.duckdb_arch}} $BUCKET_NAME true
+            python -m pip install awscli
+            ./scripts/extension-upload.sh aws ${{ github.ref_name }} $DUCKDB_VERSION windows_amd64 $BUCKET_NAME true 
           elif [[ "$GITHUB_REF" =~ ^(refs/heads/main)$ ]] ; then
-            python3 -m pip install pip awscli
-            ./scripts/extension-upload.sh aws `git log -1 --format=%h` $DUCKDB_VERSION ${{matrix.duckdb_arch}} $BUCKET_NAME false
+            python -m pip install awscli
+            ./scripts/extension-upload.sh aws `git log -1 --format=%h` $DUCKDB_VERSION windows_amd64 $BUCKET_NAME false 
           fi
