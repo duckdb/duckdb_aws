@@ -7,9 +7,6 @@ set(EXTENSION_NAME ${TARGET_NAME}_extension)
 project(${TARGET_NAME})
 include_directories(src/include)
 
-#set(CMAKE_CXX_STANDARD 14)
-#set(CMAKE_CXX_STANDARD_REQUIRED True)
-
 set(EXTENSION_SOURCES src/aws_extension.cpp)
 add_library(${EXTENSION_NAME} STATIC ${EXTENSION_SOURCES})
 
