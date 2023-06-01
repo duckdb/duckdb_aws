@@ -3,8 +3,8 @@
 #include "aws_extension.hpp"
 #include "duckdb.hpp"
 #include "duckdb/common/exception.hpp"
-#include "duckdb/parser/parsed_data/create_table_function_info.hpp"
-
+#include "duckdb/main/extension_util.hpp"
+#include <duckdb/parser/parsed_data/create_scalar_function_info.hpp>
 #include <aws/core/Aws.h>
 #include <aws/core/auth/AWSCredentialsProviderChain.h>
 #include <iostream>
@@ -62,16 +62,8 @@ static void LoadAWSCredentialsFun(ClientContext &context, TableFunctionInput &da
 }
 
 static void LoadInternal(DuckDB &db) {
-	Connection con(db);
-
-	con.BeginTransaction();
-	auto &catalog = Catalog::GetSystemCatalog(*con.context);
-
-	TableFunction load_credentials_func("load_aws_credentials", {}, LoadAWSCredentialsFun, LoadAWSCredentialsBind);
-	CreateTableFunctionInfo load_credentials_info(load_credentials_func);
-	catalog.CreateTableFunction(*con.context, &load_credentials_info);
-
-	con.Commit();
+	auto load_credentials_func = TableFunction("load_aws_credentials", {}, LoadAWSCredentialsFun, LoadAWSCredentialsBind);
+	ExtensionUtil::RegisterFunction(*db.instance, load_credentials_func);
 }
 
 void AwsExtension::Load(DuckDB &db) {
