@@ -17,6 +17,7 @@ build_loadable_extension(${TARGET_NAME} ${PARAMETERS} ${EXTENSION_SOURCES})
 find_package(ZLIB REQUIRED)
 find_package(AWSSDK REQUIRED COMPONENTS core)
 
+target_include_directories(${EXTENSION_NAME} PRIVATE ${AWSSDK_INCLUDE_DIRS})
 target_link_libraries(${EXTENSION_NAME} ${AWSSDK_LINK_LIBRARIES})
 
 install(
