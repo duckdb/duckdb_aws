@@ -6,7 +6,7 @@
 statement error
 CALL load_aws_credentials();
 ----
-Catalog Error: Table Function with name load_aws_credentials does not exist!
+Catalog Error: Function with name "load_aws_credentials" is not in the catalog, but it exists in the aws extension.
 
 # Require statement will ensure this test is run with this extension loaded
 require aws

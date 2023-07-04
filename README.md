@@ -1,8 +1,3 @@
-# WIP Disclaimer
-This repository is work-in-progress, use at your own risk.
-
-When sufficiently stable, this extension will move to github.com/duckdblabs
-
 # DuckDB AWS Extension
 This is a DuckDB extension that provides features that depend on the AWS SDK.
 
