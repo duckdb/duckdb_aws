@@ -22,8 +22,8 @@ target_include_directories(${EXTENSION_NAME} PUBLIC $<BUILD_INTERFACE:${AWSSDK_I
 target_link_libraries(${EXTENSION_NAME} ${AWSSDK_LINK_LIBRARIES})
 
 # Build loadable binary
-target_include_directories(${TARGET_NAME}_loadable_extension PRIVATE $<BUILD_INTERFACE:${AWSSDK_INCLUDE_DIRS}>)
-target_link_libraries(${TARGET_NAME}_loadable_extension ${AWSSDK_LINK_LIBRARIES})
+target_include_directories(aws_loadable_extension PRIVATE $<BUILD_INTERFACE:${AWSSDK_INCLUDE_DIRS}>)
+target_link_libraries(aws_loadable_extension ${AWSSDK_LINK_LIBRARIES})
 
 install(
         TARGETS ${EXTENSION_NAME}
