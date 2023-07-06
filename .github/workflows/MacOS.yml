@@ -93,8 +93,8 @@ jobs:
             echo 'No key set, skipping'
           elif [[ "$GITHUB_REF" =~ ^(refs/tags/v.+)$ ]] ; then
             python3 -m pip install pip awscli
-            ./scripts/extension-upload.sh azure ${{ github.ref_name }} $DUCKDB_VERSION ${{matrix.duckdb_arch}} $BUCKET_NAME true
+            ./scripts/extension-upload.sh aws ${{ github.ref_name }} $DUCKDB_VERSION ${{matrix.duckdb_arch}} $BUCKET_NAME true
           elif [[ "$GITHUB_REF" =~ ^(refs/heads/main)$ ]] ; then
             python3 -m pip install pip awscli
-            ./scripts/extension-upload.sh azure `git log -1 --format=%h` $DUCKDB_VERSION ${{matrix.duckdb_arch}} $BUCKET_NAME false
+            ./scripts/extension-upload.sh aws `git log -1 --format=%h` $DUCKDB_VERSION ${{matrix.duckdb_arch}} $BUCKET_NAME false
           fi
