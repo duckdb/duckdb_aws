@@ -1,0 +1,81 @@
+# name: test/sql/aws_minio.test
+# description: test aws extension with minio test server
+# group: [aws]
+
+require aws
+
+require httpfs
+
+require-env DUCKDB_S3_ENDPOINT
+
+require-env DUCKDB_S3_USE_SSL
+
+require-env AWS_DEFAULT_REGION
+
+require-env S3_TEST_SERVER_AVAILABLE 1
+
+set ignore_error_messages
+
+# Without params, this will use the DefaultAWSCredentialsProviderChain (https://sdk.amazonaws.com/cpp/api/LATEST/root/html/md_docs_2_credentials___providers.html)
+query I
+CALL load_aws_credentials();
+----
+minio_duckdb_user
+
+query I
+select value from duckdb_settings() where name='s3_secret_access_key';
+----
+minio_duckdb_user_password
+
+query I
+select value from duckdb_settings() where name='s3_access_key_id';
+----
+minio_duckdb_user
+
+# You can specify which config profile to use, this uses the ProfileConfigFileAWSCredentialsProvider directly
+query I
+CALL load_aws_credentials('minio-testing-2');
+----
+minio_duckdb_user_2
+
+query I
+select value from duckdb_settings() where name='s3_secret_access_key';
+----
+minio_duckdb_user_password_2
+
+query I
+select value from duckdb_settings() where name='s3_access_key_id';
+----
+minio_duckdb_user_2
+
+statement ok
+CALL load_aws_credentials();
+
+statement ok
+COPY (select 123 as column) to 's3://test-bucket/test_basic/test.csv';
+
+query I
+SELECT * FROM 's3://test-bucket/test_basic/test.csv';
+----
+123
+
+# Now when we select a failing profile, the query should fail
+query I
+CALL load_aws_credentials('minio-testing-invalid');
+----
+minio_duckdb_user_invalid
+
+statement error
+SELECT * FROM 's3://test-bucket/test_basic/test.csv';
+----
+HTTP 403
+
+# Now resetting to one of the working profiles and it works again
+statement ok
+CALL load_aws_credentials();
+
+query I
+SELECT * FROM 's3://test-bucket/test_basic/test.csv';
+----
+123
+
