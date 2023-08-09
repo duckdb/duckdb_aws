@@ -20,6 +20,8 @@ jobs:
       DUCKDB_S3_ENDPOINT: duckdb-minio.com:9000
       DUCKDB_S3_USE_SSL: false
       GEN: ninja
+      VCPKG_TARGET_TRIPLET: x64-linux
+      VCPKG_TOOLCHAIN_PATH: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
 
     steps:
       - uses: actions/checkout@v3
@@ -46,6 +48,11 @@ jobs:
         with:
           key: ${{ github.job }}
           save: ${{ github.ref == 'refs/heads/master' || github.repository != 'duckdb/duckdb' }}
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 501db0f17ef6df184fcdbfbe0f87cde2313b6ab1
 
       - name: Build
         shell: bash
