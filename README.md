@@ -1,17 +1,18 @@
-Warning: this extension is currently in an experimental state. Feel free to try it out, but be aware
-that only minimal testing was done.
-
-Warning 2: This extension currently builds with a feature branch of DuckDB. A PR is being worked on. When the PR is merged,
-this extension will be included in (nightly) DuckDB releases.
+## Experimental warning
+This extension is currently in an experimental state. Feel free to try it out, but be aware some things
+may not work as expected.
 
 # DuckDB AWS Extension
 This is a DuckDB extension that provides features that depend on the AWS SDK.
 
+## Binary distribution
+Binaries are available in the main extension repository for DuckDB only for nightly builds at the moment, but will be 
+available next release of DuckDB (v0.9.0)
+
 ## Supported architectures
-Currently, only Linux x86_64 and MacOS are supported.
+The extension is tested & distributed for Linux (x64), MacOS (x64, arm64) and Windows (x64)
 
 ## Features
-
 | function | type | description | 
 | --- | --- | --- |
 | `load_aws_credentials` | Pragma call function | Automatically loads the AWS credentials through the Default AWS Credentials Provider Chain |
