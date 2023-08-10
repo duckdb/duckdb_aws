@@ -1,7 +1,11 @@
 #!/bin/bash
+# Warning: overwrites your existing aws credentials file!
 
 # Set the file path for the credentials file
 credentials_file=~/.aws/credentials
+
+# create dir if not already existend
+mkdir -p ~/.aws
 
 # Create the credentials configuration
 credentials_config="[default]
