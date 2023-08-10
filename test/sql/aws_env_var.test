@@ -14,3 +14,13 @@ query I
 CALL load_aws_credentials();
 ----
 minio_duckdb_user
+
+query I
+select value from duckdb_settings() where name='s3_secret_access_key';
+----
+minio_duckdb_user_password
+
+query I
+select value from duckdb_settings() where name='s3_access_key_id';
+----
+minio_duckdb_user
