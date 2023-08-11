@@ -79,3 +79,25 @@ SELECT * FROM 's3://test-bucket/test_basic/test.csv';
 ----
 123
 
+# Trying to access a profile that doesn't exist should return NULL and not change anything
+query I
+CALL load_aws_credentials('profile-doesnt-exists-altogether');
+----
+NULL
+
+query I
+CALL load_aws_credentials(NULL);
+----
+NULL
+
+# Key is untouched
+query I
+select value from duckdb_settings() where name='s3_secret_access_key';
+----
+minio_duckdb_user_password
+
+# Query still works
+query I
+SELECT * FROM 's3://test-bucket/test_basic/test.csv';
+----
+123
