@@ -17,10 +17,10 @@ require-env S3_TEST_SERVER_AVAILABLE 1
 set ignore_error_messages
 
 # Without params, this will use the DefaultAWSCredentialsProviderChain (https://sdk.amazonaws.com/cpp/api/LATEST/root/html/md_docs_2_credentials___providers.html)
-query I
+query IIII
 CALL load_aws_credentials();
 ----
-minio_duckdb_user
+minio_duckdb_user	<redacted>	NULL	eu-west-1
 
 query I
 select value from duckdb_settings() where name='s3_secret_access_key';
@@ -33,20 +33,32 @@ select value from duckdb_settings() where name='s3_access_key_id';
 minio_duckdb_user
 
 # You can specify which config profile to use, this uses the ProfileConfigFileAWSCredentialsProvider directly
-query I
+query IIII
 CALL load_aws_credentials('minio-testing-2');
 ----
-minio_duckdb_user_2
+minio_duckdb_user_2	<redacted>	NULL	eu-west-2
+
+# You can disable secret redaction to make load_aws_credentials print the secret key
+query IIII
+CALL load_aws_credentials(redact_secret=false);
+----
+minio_duckdb_user	minio_duckdb_user_password	NULL	eu-west-1
+
+# You can also skip loading the region to only set the main credentials
+query IIII
+CALL load_aws_credentials(set_region=false);
+----
+minio_duckdb_user	<redacted>	NULL	NULL
 
 query I
 select value from duckdb_settings() where name='s3_secret_access_key';
 ----
-minio_duckdb_user_password_2
+minio_duckdb_user_password
 
 query I
 select value from duckdb_settings() where name='s3_access_key_id';
 ----
-minio_duckdb_user_2
+minio_duckdb_user
 
 statement ok
 CALL load_aws_credentials();
@@ -60,11 +72,22 @@ SELECT * FROM 's3://test-bucket/test_basic/test.csv';
 123
 
 # Now when we select a failing profile, the query should fail
-query I
+query IIII
 CALL load_aws_credentials('minio-testing-invalid');
 ----
-minio_duckdb_user_invalid
+minio_duckdb_user_invalid	<redacted>	completelybogussessiontoken	the-moon-123
 
+# Malformed region: throws 400
+statement error
+SELECT * FROM 's3://test-bucket/test_basic/test.csv';
+----
+HTTP 400
+
+# reset region
+statement ok
+set s3_region='eu-west-1';
+
+# now http 403 is thrown for invalid credentials
 statement error
 SELECT * FROM 's3://test-bucket/test_basic/test.csv';
 ----
@@ -79,16 +102,16 @@ SELECT * FROM 's3://test-bucket/test_basic/test.csv';
 ----
 123
 
-# Trying to access a profile that doesn't exist should return NULL and not change anything
-query I
+# Trying to access a profile that doesn't exist will load the default profile
+query IIII
 CALL load_aws_credentials('profile-doesnt-exists-altogether');
 ----
-NULL
+NULL	NULL	NULL	eu-west-1
 
-query I
+query IIII
 CALL load_aws_credentials(NULL);
 ----
-NULL
+NULL	NULL	NULL	eu-west-1
 
 # Key is untouched
 query I

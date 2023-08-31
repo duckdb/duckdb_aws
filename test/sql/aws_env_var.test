@@ -10,10 +10,8 @@ require-env AWS_ACCESS_KEY_ID
 
 require-env AWS_SECRET_ACCESS_KEY
 
-query I
+statement ok
 CALL load_aws_credentials();
-----
-minio_duckdb_user
 
 query I
 select value from duckdb_settings() where name='s3_secret_access_key';
@@ -25,20 +23,17 @@ select value from duckdb_settings() where name='s3_access_key_id';
 ----
 minio_duckdb_user
 
-# Trying to access a profile that doesn't exist should return NULL and not change anything
-query I
-CALL load_aws_credentials('profile-doesnt-exists-altogether');
-----
-NULL
+statement ok
+set s3_access_key_id='bogus';
 
-# Same for passing null as a profile, it does nothing.
-query I
+statement ok
+CALL load_aws_credentials('profile-doesnt-exists-altogether');
+
+statement ok
 CALL load_aws_credentials(NULL);
-----
-NULL
 
 # Key is untouched
 query I
 select value from duckdb_settings() where name='s3_access_key_id';
 ----
-minio_duckdb_user
+bogus
