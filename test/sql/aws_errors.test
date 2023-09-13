@@ -2,6 +2,8 @@
 # description: test aws extension
 # group: [aws]
 
+require no_extension_autoloading
+
 # Before we load the extension, this will fail
 statement error
 CALL load_aws_credentials();
