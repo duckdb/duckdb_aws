@@ -1,6 +1,8 @@
 #define DUCKDB_EXTENSION_MAIN
 
+#include "aws_secret.hpp"
 #include "aws_extension.hpp"
+
 #include "duckdb.hpp"
 #include "duckdb/common/exception.hpp"
 #include "duckdb/catalog/catalog.hpp"
@@ -12,15 +14,8 @@
 
 namespace duckdb {
 
-struct SetCredentialsResult {
-	string set_access_key_id;
-	string set_secret_access_key;
-	string set_session_token;
-	string set_region;
-};
-
 //! Set the DuckDB AWS Credentials using the DefaultAWSCredentialsProviderChain
-static SetCredentialsResult TrySetAwsCredentials(DBConfig& config, const string& profile, bool set_region) {
+static AwsSetCredentialsResult TrySetAwsCredentials(DBConfig& config, const string& profile, bool set_region) {
 	Aws::SDKOptions options;
 	Aws::InitAPI(options);
 	Aws::Auth::AWSCredentials credentials;
@@ -41,8 +36,7 @@ static SetCredentialsResult TrySetAwsCredentials(DBConfig& config, const string&
 	// TODO: We would also like to get the endpoint here, but it's currently not supported by the AWS SDK:
 	// 		 https://github.com/aws/aws-sdk-cpp/issues/2587
 
-
-	SetCredentialsResult ret;
+	AwsSetCredentialsResult ret;
 	if (!credentials.IsExpiredOrEmpty()) {
 		config.SetOption("s3_access_key_id", Value(credentials.GetAWSAccessKeyId()));
 		config.SetOption("s3_secret_access_key", Value(credentials.GetAWSSecretKey()));
@@ -140,6 +134,8 @@ static void LoadInternal(DuckDB &db) {
 	function_set.AddFunction(profile_fun);
 
 	ExtensionUtil::RegisterFunction(*db.instance, function_set);
+
+	CreateAwsSecretFunctions::Register(*db.instance);
 }
 
 void AwsExtension::Load(DuckDB &db) {
