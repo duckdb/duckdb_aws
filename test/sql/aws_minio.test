@@ -10,8 +10,6 @@ require-env DUCKDB_S3_ENDPOINT
 
 require-env DUCKDB_S3_USE_SSL
 
-require-env AWS_DEFAULT_REGION
-
 require-env S3_TEST_SERVER_AVAILABLE 1
 
 set ignore_error_messages
@@ -36,7 +34,7 @@ minio_duckdb_user
 query IIII
 CALL load_aws_credentials('minio-testing-2');
 ----
-minio_duckdb_user_2	<redacted>	NULL	eu-west-2
+minio_duckdb_user_2	<redacted>	NULL	eu-west-1
 
 # You can disable secret redaction to make load_aws_credentials print the secret key
 query IIII

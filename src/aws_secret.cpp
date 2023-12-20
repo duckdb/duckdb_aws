@@ -12,11 +12,11 @@ namespace duckdb {
 //! Parse and set the remaining options
 static void ParseCoreS3Config(CreateSecretInput &input, KeyValueSecret &secret) {
 	vector<string> options = {
-	    "region", "endpoint", "session_token", "endpoint", "url_style", "use_ssl", "s3_url_compatibility_mode"};
+	    "key_id", "secret", "region", "endpoint", "session_token", "endpoint", "url_style", "use_ssl", "s3_url_compatibility_mode"};
 	for (const auto &val : options) {
 		auto set_region_param = input.options.find(val);
 		if (set_region_param != input.options.end()) {
-			secret.secret_map[val] = set_region_param->second.ToString();
+			secret.secret_map[val] = set_region_param->second;
 		}
 	}
 }
@@ -55,12 +55,15 @@ static unique_ptr<BaseSecret> CreateAWSSecretFromCredentialChain(ClientContext &
 
 	auto result = ConstructBaseS3Secret(input.scope, input.type, input.provider, input.name);
 
+	if (!region.empty()) {
+		result->secret_map["region"] = region;
+	}
+
 	AwsSetCredentialsResult ret;
 	if (!credentials.IsExpiredOrEmpty()) {
-		// TODO: These should be values?!
-		result->secret_map["access_key_id"] = Value(credentials.GetAWSAccessKeyId()).ToString();
-		result->secret_map["secret_access_key"] = Value(credentials.GetAWSSecretKey()).ToString();
-		result->secret_map["s3_session_token"] = Value(credentials.GetSessionToken()).ToString();
+		result->secret_map["key_id"] = Value(credentials.GetAWSAccessKeyId());
+		result->secret_map["secret"] = Value(credentials.GetAWSSecretKey());
+		result->secret_map["session_token"] = Value(credentials.GetSessionToken());
 	}
 
 	Aws::ShutdownAPI(options);
@@ -75,6 +78,8 @@ void CreateAwsSecretFunctions::Register(DatabaseInstance &instance) {
 
 	// Register the credential_chain secret provider
 	CreateSecretFunction cred_chain_function = {type, "credential_chain", CreateAWSSecretFromCredentialChain};
+
+	// Params for adding / overriding settings to the automatically fetched ones
 	cred_chain_function.named_parameters["key_id"] = LogicalType::VARCHAR;
 	cred_chain_function.named_parameters["secret"] = LogicalType::VARCHAR;
 	cred_chain_function.named_parameters["region"] = LogicalType::VARCHAR;
@@ -87,6 +92,9 @@ void CreateAwsSecretFunctions::Register(DatabaseInstance &instance) {
 	if (type == "r2") {
 		cred_chain_function.named_parameters["account_id"] = LogicalType::VARCHAR;
 	}
+
+	// Params for configuring the credential loading
+	cred_chain_function.named_parameters["profile"] = LogicalType::VARCHAR;
 
 	ExtensionUtil::RegisterFunction(instance, cred_chain_function);
 }
