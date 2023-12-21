@@ -14,12 +14,11 @@ concurrency:
 jobs:
   duckdb-stable-build:
     name: Build extension binaries
-    uses: duckdb/duckdb/.github/workflows/_extension_distribution.yml@6812703823d1d66566bc7eaac2b6e4b273c85333
+    uses: duckdb/duckdb/.github/workflows/_extension_distribution.yml@a491470b039c54fe2f0adfe1d161b14c7fe64642
     with:
       extension_name: quack
-      duckdb_version: v0.9.2
-      exclude_archs: 'wasm_mvp;wasm_eh;wasm_threads' # Doesn't work anyway
-      vcpkg_commit: a42af01b72c28a8e1d7b48107b33e4f286a55ef6
+      duckdb_version: a491470b03
+      exclude_archs: 'wasm_mvp;wasm_eh;wasm_threads' # Doesn't work anyway: env local file or env access possible
 
   duckdb-stable-deploy:
     name: Deploy extension binaries
@@ -28,7 +27,7 @@ jobs:
     secrets: inherit
     with:
       extension_name: quack
-      duckdb_version: v0.9.2
-      exclude_archs: 'wasm_mvp;wasm_eh;wasm_threads' # Doesn't work anyway
+      duckdb_version: a491470b03
+      exclude_archs: 'wasm_mvp;wasm_eh;wasm_threads' # Doesn't work anyway: env local file or env access possible
       deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
       deploy_versioned: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
