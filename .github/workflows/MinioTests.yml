@@ -50,13 +50,13 @@ jobs:
           save: ${{ github.ref == 'refs/heads/main' || github.repository != 'duckdb/duckdb' }}
 
       - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
+        uses: lukka/run-vcpkg@v11.1
         with:
           vcpkgGitCommitId: a42af01b72c28a8e1d7b48107b33e4f286a55ef6
 
       - name: Build
         shell: bash
-        run: make debug
+        run: make
 
       - name: Start S3/HTTP test server
         shell: bash
@@ -74,7 +74,7 @@ jobs:
       - name: Test
         shell: bash
         run: |
-          make test_debug
+          make test
 
       - name: Run Env tests
         shell: bash
@@ -84,4 +84,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: duckdb_env_testing_key
           AWS_DEFAULT_REGION: duckdb_env_testing_region
         run: |
-          ./build/debug/test/unittest "*/test/sql/env/*"
+          ./build/release/test/unittest "*/test/sql/env/*"
