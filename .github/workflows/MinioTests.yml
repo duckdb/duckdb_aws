@@ -21,6 +21,7 @@ jobs:
       GEN: ninja
       VCPKG_TARGET_TRIPLET: x64-linux
       VCPKG_TOOLCHAIN_PATH: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+      DISABLE_UNITY: 1
 
     steps:
       - uses: actions/checkout@v3
