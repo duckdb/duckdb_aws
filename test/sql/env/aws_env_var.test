@@ -6,9 +6,13 @@ require aws
 
 require httpfs
 
+require-env DUCKDB_AWS_TESTING_ENV_AVAILABLE
+
 require-env AWS_ACCESS_KEY_ID
 
 require-env AWS_SECRET_ACCESS_KEY
+
+require-env AWS_DEFAULT_REGION
 
 statement ok
 CALL load_aws_credentials();
@@ -16,12 +20,12 @@ CALL load_aws_credentials();
 query I
 select value from duckdb_settings() where name='s3_secret_access_key';
 ----
-minio_duckdb_user_password
+duckdb_env_testing_key
 
 query I
 select value from duckdb_settings() where name='s3_access_key_id';
 ----
-minio_duckdb_user
+duckdb_env_testing_id
 
 statement ok
 set s3_access_key_id='bogus';

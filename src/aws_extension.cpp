@@ -1,6 +1,8 @@
 #define DUCKDB_EXTENSION_MAIN
 
+#include "aws_secret.hpp"
 #include "aws_extension.hpp"
+
 #include "duckdb.hpp"
 #include "duckdb/common/exception.hpp"
 #include "duckdb/catalog/catalog.hpp"
@@ -12,15 +14,8 @@
 
 namespace duckdb {
 
-struct SetCredentialsResult {
-	string set_access_key_id;
-	string set_secret_access_key;
-	string set_session_token;
-	string set_region;
-};
-
 //! Set the DuckDB AWS Credentials using the DefaultAWSCredentialsProviderChain
-static SetCredentialsResult TrySetAwsCredentials(DBConfig& config, const string& profile, bool set_region) {
+static AwsSetCredentialsResult TrySetAwsCredentials(DBConfig &config, const string &profile, bool set_region) {
 	Aws::SDKOptions options;
 	Aws::InitAPI(options);
 	Aws::Auth::AWSCredentials credentials;
@@ -41,8 +36,7 @@ static SetCredentialsResult TrySetAwsCredentials(DBConfig& config, const string&
 	// TODO: We would also like to get the endpoint here, but it's currently not supported by the AWS SDK:
 	// 		 https://github.com/aws/aws-sdk-cpp/issues/2587
 
-
-	SetCredentialsResult ret;
+	AwsSetCredentialsResult ret;
 	if (!credentials.IsExpiredOrEmpty()) {
 		config.SetOption("s3_access_key_id", Value(credentials.GetAWSAccessKeyId()));
 		config.SetOption("s3_secret_access_key", Value(credentials.GetAWSSecretKey()));
@@ -69,10 +63,10 @@ struct SetAWSCredentialsFunctionData : public TableFunctionData {
 };
 
 static unique_ptr<FunctionData> LoadAWSCredentialsBind(ClientContext &context, TableFunctionBindInput &input,
-                                          vector<LogicalType> &return_types, vector<string> &names) {
+                                                       vector<LogicalType> &return_types, vector<string> &names) {
 	auto result = make_uniq<SetAWSCredentialsFunctionData>();
 
-	for (const auto& option : input.named_parameters) {
+	for (const auto &option : input.named_parameters) {
 		if (option.first == "set_region") {
 			result->set_region = BooleanValue::Get(option.second);
 		} else if (option.first == "redact_secret") {
@@ -112,14 +106,15 @@ static void LoadAWSCredentialsFun(ClientContext &context, TableFunctionInput &da
 	auto load_result = TrySetAwsCredentials(DBConfig::GetConfig(context), data.profile_name, data.set_region);
 
 	// Set return values for all modified params
-	output.SetValue(0,0, load_result.set_access_key_id.empty() ? Value(nullptr) : load_result.set_access_key_id);
+	output.SetValue(0, 0, load_result.set_access_key_id.empty() ? Value(nullptr) : load_result.set_access_key_id);
 	if (data.redact_secret && !load_result.set_secret_access_key.empty()) {
-		output.SetValue(1,0,"<redacted>");
+		output.SetValue(1, 0, "<redacted>");
 	} else {
-		output.SetValue(1,0,load_result.set_secret_access_key.empty() ? Value(nullptr) : load_result.set_secret_access_key);
+		output.SetValue(1, 0,
+		                load_result.set_secret_access_key.empty() ? Value(nullptr) : load_result.set_secret_access_key);
 	}
-	output.SetValue(2,0,load_result.set_session_token.empty() ? Value(nullptr) : load_result.set_session_token);
-	output.SetValue(3,0,load_result.set_region.empty() ? Value(nullptr) : load_result.set_region);
+	output.SetValue(2, 0, load_result.set_session_token.empty() ? Value(nullptr) : load_result.set_session_token);
+	output.SetValue(3, 0, load_result.set_region.empty() ? Value(nullptr) : load_result.set_region);
 
 	output.SetCardinality(1);
 
@@ -129,7 +124,8 @@ static void LoadAWSCredentialsFun(ClientContext &context, TableFunctionInput &da
 static void LoadInternal(DuckDB &db) {
 	TableFunctionSet function_set("load_aws_credentials");
 	auto base_fun = TableFunction("load_aws_credentials", {}, LoadAWSCredentialsFun, LoadAWSCredentialsBind);
-	auto profile_fun = TableFunction("load_aws_credentials", {LogicalTypeId::VARCHAR}, LoadAWSCredentialsFun, LoadAWSCredentialsBind);
+	auto profile_fun =
+	    TableFunction("load_aws_credentials", {LogicalTypeId::VARCHAR}, LoadAWSCredentialsFun, LoadAWSCredentialsBind);
 
 	base_fun.named_parameters["set_region"] = LogicalTypeId::BOOLEAN;
 	base_fun.named_parameters["redact_secret"] = LogicalTypeId::BOOLEAN;
@@ -140,6 +136,8 @@ static void LoadInternal(DuckDB &db) {
 	function_set.AddFunction(profile_fun);
 
 	ExtensionUtil::RegisterFunction(*db.instance, function_set);
+
+	CreateAwsSecretFunctions::Register(*db.instance);
 }
 
 void AwsExtension::Load(DuckDB &db) {

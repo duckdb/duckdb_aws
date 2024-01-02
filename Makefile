@@ -5,12 +5,23 @@ all: release
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJ_DIR := $(dir $(MKFILE_PATH))
 
+ifeq ($(OS),Windows_NT)
+	TEST_PATH="/test/Release/unittest.exe"
+else
+	TEST_PATH="/test/unittest"
+endif
+
 OSX_BUILD_UNIVERSAL_FLAG=
 ifneq (${OSX_BUILD_ARCH}, "")
 	OSX_BUILD_UNIVERSAL_FLAG=-DOSX_BUILD_ARCH=${OSX_BUILD_ARCH}
 endif
 ifeq (${STATIC_LIBCPP}, 1)
 	STATIC_LIBCPP=-DSTATIC_LIBCPP=TRUE
+endif
+ifeq (${DONT_STATIC_LINK_DUCKDB}, 1)
+	STATIC_LINK_DUCKDB_FLAG=-DEXTENSION_STATIC_BUILD=0
+else
+	STATIC_LINK_DUCKDB_FLAG=-DEXTENSION_STATIC_BUILD=1
 endif
 
 VCPKG_TOOLCHAIN_PATH?=
@@ -26,7 +37,7 @@ ifeq ($(GEN),ninja)
 	FORCE_COLOR=-DFORCE_COLORED_OUTPUT=1
 endif
 
-BUILD_FLAGS=-DEXTENSION_STATIC_BUILD=1 -DBUILD_EXTENSIONS="tpch;httpfs" ${OSX_BUILD_UNIVERSAL_FLAG} ${STATIC_LIBCPP} ${TOOLCHAIN_FLAGS}
+BUILD_FLAGS=-DBUILD_EXTENSIONS="tpch;httpfs" ${STATIC_LINK_DUCKDB_FLAG} ${OSX_BUILD_UNIVERSAL_FLAG} ${STATIC_LIBCPP} ${DISABLE_UNITY_FLAG} ${TOOLCHAIN_FLAGS}
 
 CLIENT_FLAGS :=
 
@@ -38,6 +49,7 @@ EXTENSION_FLAGS=\
 -DDUCKDB_EXTENSION_AWS_LOAD_TESTS=1 \
 -DDUCKDB_EXTENSION_AWS_TEST_PATH="$(PROJ_DIR)test" \
 -DDUCKDB_EXTENSION_AWS_INCLUDE_PATH="$(PROJ_DIR)src/include" \
+-DDUCKDB_EXTENSION_AWS_VERSION="$(PROJ_DIR)src/include" \
 
 
 pull:
@@ -81,12 +93,10 @@ release_python: release
 
 # Main tests
 test: test_release
-
 test_release: release
-	./build/release/test/unittest "$(PROJ_DIR)test/*"
-
+	./build/release/$(TEST_PATH) "$(PROJ_DIR)test/*"
 test_debug: debug
-	./build/debug/test/unittest "$(PROJ_DIR)test/*"
+	./build/debug/$(TEST_PATH) "$(PROJ_DIR)test/*"
 
 # Client tests
 test_js: test_debug_js

@@ -17,7 +17,7 @@ aws_secret_access_key=minio_duckdb_user_password
 
 [minio-testing-2]
 aws_access_key_id=minio_duckdb_user_2
-aws_secret_access_key=minio_duckdb_user_password_2
+aws_secret_access_key=minio_duckdb_user_2_password
 
 [minio-testing-invalid]
 aws_access_key_id=minio_duckdb_user_invalid
@@ -33,7 +33,7 @@ config_str="[default]
 region=eu-west-1
 
 [profile minio-testing-2]
-region=eu-west-2
+region=eu-west-1
 
 [profile minio-testing-invalid]
 region=the-moon-123
