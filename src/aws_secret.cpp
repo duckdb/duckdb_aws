@@ -28,7 +28,7 @@ static void ParseCoreS3Config(CreateSecretInput &input, KeyValueSecret &secret) 
 static unique_ptr<KeyValueSecret> ConstructBaseS3Secret(vector<string> &prefix_paths_p, string &type, string &provider,
                                                         string &name) {
 	auto return_value = make_uniq<KeyValueSecret>(prefix_paths_p, type, provider, name);
-	return_value->redact_keys = {"secret_access_key", "session_token"};
+	return_value->redact_keys = {"secret", "session_token"};
 	return return_value;
 }
 
