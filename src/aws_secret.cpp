@@ -28,7 +28,7 @@ static void ParseCoreS3Config(CreateSecretInput &input, KeyValueSecret &secret) 
 static unique_ptr<KeyValueSecret> ConstructBaseS3Secret(vector<string> &prefix_paths_p, string &type, string &provider,
                                                         string &name) {
 	auto return_value = make_uniq<KeyValueSecret>(prefix_paths_p, type, provider, name);
-	return_value->redact_keys = {"secret_access_key", "session_token"};
+	return_value->redact_keys = {"secret", "session_token"};
 	return return_value;
 }
 
@@ -123,7 +123,23 @@ static unique_ptr<BaseSecret> CreateAWSSecretFromCredentialChain(ClientContext &
 	// TODO: We would also like to get the endpoint here, but it's currently not supported byq the AWS SDK:
 	// 		 https://github.com/aws/aws-sdk-cpp/issues/2587
 
-	auto result = ConstructBaseS3Secret(input.scope, input.type, input.provider, input.name);
+	auto scope = input.scope;
+	if (scope.empty()) {
+		if (input.type == "s3") {
+			scope.push_back("s3://");
+			scope.push_back("s3n://");
+			scope.push_back("s3a://");
+		} else if (input.type == "r2") {
+			scope.push_back("r2://");
+		} else if (input.type == "gcs") {
+			scope.push_back("gcs://");
+			scope.push_back("gs://");
+		} else {
+			throw InternalException("Unknown secret type found in httpfs extension: '%s'", input.type);
+		}
+	}
+
+	auto result = ConstructBaseS3Secret(scope, input.type, input.provider, input.name);
 
 	if (!region.empty()) {
 		result->secret_map["region"] = region;
