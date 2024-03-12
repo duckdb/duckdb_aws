@@ -35,10 +35,7 @@ static unique_ptr<KeyValueSecret> ConstructBaseS3Secret(vector<string> &prefix_p
 //! Generate a custom credential provider chain for authentication
 class DuckDBCustomAWSCredentialsProviderChain : public Aws::Auth::AWSCredentialsProviderChain {
 public:
-	explicit DuckDBCustomAWSCredentialsProviderChain(const string &credential_chain, const string &profile = "",
-	                                                 const string &task_role_resource_path = "",
-	                                                 const string &task_role_endpoint = "",
-	                                                 const string &task_role_token = "") {
+	explicit DuckDBCustomAWSCredentialsProviderChain(const string &credential_chain, const string &profile = "") {
 		auto chain_list = StringUtil::Split(credential_chain, ';');
 
 		for (const auto &item : chain_list) {
@@ -56,16 +53,6 @@ public:
 				AddProvider(make_shared<Aws::Auth::InstanceProfileCredentialsProvider>());
 			} else if (item == "process") {
 				AddProvider(make_shared<Aws::Auth::ProcessCredentialsProvider>());
-			} else if (item == "task_role") {
-				if (!task_role_resource_path.empty()) {
-					AddProvider(make_shared<Aws::Auth::TaskRoleCredentialsProvider>(task_role_resource_path.c_str()));
-				} else if (!task_role_endpoint.empty()) {
-					AddProvider(make_shared<Aws::Auth::TaskRoleCredentialsProvider>(task_role_endpoint.c_str(),
-					                                                                task_role_token.c_str()));
-				} else {
-					throw InvalidInputException(
-					    "task_role provider selected without a resource path or endpoint specified!");
-				}
 			} else if (item == "config") {
 				if (profile.empty()) {
 					AddProvider(make_shared<Aws::Auth::ProfileConfigFileAWSCredentialsProvider>());
@@ -99,12 +86,8 @@ static unique_ptr<BaseSecret> CreateAWSSecretFromCredentialChain(ClientContext &
 
 	if (input.options.find("chain") != input.options.end()) {
 		string chain = TryGetStringParam(input, "chain");
-		string task_role_resource_path = TryGetStringParam(input, "task_role_resource_path");
-		string task_role_endpoint = TryGetStringParam(input, "task_role_endpoint");
-		string task_role_token = TryGetStringParam(input, "task_role_token");
 
-		DuckDBCustomAWSCredentialsProviderChain provider(chain, profile, task_role_resource_path, task_role_endpoint,
-		                                                 task_role_token);
+		DuckDBCustomAWSCredentialsProviderChain provider(chain, profile);
 		credentials = provider.GetAWSCredentials();
 	} else {
 		if (input.options.find("profile") != input.options.end()) {
@@ -210,9 +193,6 @@ void CreateAwsSecretFunctions::Register(DatabaseInstance &instance) {
 
 		// Params for configuring the credential loading
 		cred_chain_function.named_parameters["profile"] = LogicalType::VARCHAR;
-		cred_chain_function.named_parameters["task_role_resource_path"] = LogicalType::VARCHAR;
-		cred_chain_function.named_parameters["task_role_endpoint"] = LogicalType::VARCHAR;
-		cred_chain_function.named_parameters["task_role_token"] = LogicalType::VARCHAR;
 
 		ExtensionUtil::RegisterFunction(instance, cred_chain_function);
 	}
