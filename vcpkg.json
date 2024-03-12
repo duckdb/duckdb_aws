@@ -3,5 +3,7 @@
     "zlib",
     "aws-sdk-cpp",
     "openssl"
-  ]
+  ],
+  "builtin-baseline": "a1a1cbc975abf909a6c8985a6a2b8fe20bbd9bd6",
+  "overrides": [{"name": "openssl", "version": "3.0.8"}]
 }
