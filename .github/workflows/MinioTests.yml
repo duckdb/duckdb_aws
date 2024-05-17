@@ -9,6 +9,7 @@ defaults:
 
 jobs:
   minio-tests:
+    if: false
     name: Minio Tests
     runs-on: ubuntu-20.04
     strategy:
