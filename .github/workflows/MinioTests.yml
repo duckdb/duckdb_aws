@@ -9,7 +9,6 @@ defaults:
 
 jobs:
   minio-tests:
-    if: false
     name: Minio Tests
     runs-on: ubuntu-20.04
     strategy:
@@ -63,6 +62,8 @@ jobs:
         shell: bash
         run: |
           cd duckdb
+          mkdir data/attach_test
+          touch data/attach_test/attach.db
           sudo ./scripts/install_s3_test_server.sh
           source ./scripts/run_s3_test_server.sh
           sleep 30
