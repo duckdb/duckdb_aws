@@ -164,7 +164,7 @@ static unique_ptr<BaseSecret> CreateAWSSecretFromCredentialChain(ClientContext &
 		}
 	}
 
-	return result;
+	return std::move(result);
 }
 
 void CreateAwsSecretFunctions::Register(DatabaseInstance &instance) {
